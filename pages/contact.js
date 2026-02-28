@@ -196,33 +196,44 @@ export default function Contact() {
 
     setIsSubmitting(true);
     setSubmitStatus({ type: "", message: "" });
-    //submit form
-    await fetch(`https://formspree.io/f/${form_id}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
-    //success message
-    setSubmitStatus({
-      type: "success",
-      message:
-        "Thank you for contacting us. We'll get back to you within 24 hours.",
-    });
-    setShowSuccessModal(true);
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-      priority: "normal",
-      category: "general",
-    });
-    setErrors({});
-    setTouched({});
-    setIsSubmitting(false);
+
+    try {
+      const res = await fetch(`https://formspree.io/f/${form_id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to submit form");
+      }
+
+      //success message
+      setSubmitStatus({
+        type: "success",
+        message:
+          "Thank you for contacting us. We'll get back to you within 24 hours.",
+      });
+      setShowSuccessModal(true);
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+        priority: "normal",
+        category: "general",
+      });
+      setErrors({});
+      setTouched({});
+    } catch (err) {
+      setSubmitStatus({ type: "error", message: err.message });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getPriorityColor = (priority) => {
@@ -492,25 +503,22 @@ export default function Contact() {
                                 category: category.value,
                               }))
                             }
-                            className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
-                              formData.category === category.value
-                                ? `border-${category.color}-500 bg-${category.color}-50 dark:bg-${category.color}-900/20`
-                                : "border-gray-400 dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-500"
-                            }`}
+                            className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center gap-2 ${formData.category === category.value
+                              ? `border-${category.color}-500 bg-${category.color}-50 dark:bg-${category.color}-900/20`
+                              : "border-gray-400 dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-500"
+                              }`}
                           >
                             <Icon
-                              className={`text-xl ${
-                                formData.category === category.value
-                                  ? `text-${category.color}-600 dark:text-${category.color}-400`
-                                  : "text-gray-400 dark:text-gray-500"
-                              }`}
+                              className={`text-xl ${formData.category === category.value
+                                ? `text-${category.color}-600 dark:text-${category.color}-400`
+                                : "text-gray-400 dark:text-gray-500"
+                                }`}
                             />
                             <span
-                              className={`text-xs font-medium ${
-                                formData.category === category.value
-                                  ? `text-${category.color}-700 dark:text-${category.color}-300`
-                                  : "text-gray-600 dark:text-gray-400"
-                              }`}
+                              className={`text-xs font-medium ${formData.category === category.value
+                                ? `text-${category.color}-700 dark:text-${category.color}-300`
+                                : "text-gray-600 dark:text-gray-400"
+                                }`}
                             >
                               {category.label}
                             </span>
@@ -532,11 +540,10 @@ export default function Contact() {
                         value={formData.name}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        className={`w-full px-4 py-3 rounded-lg border-2 ${
-                          errors.name && touched.name
-                            ? "border-red-500 focus:ring-red-500"
-                            : "border-gray-400 dark:border-gray-600 focus:ring-blue-500"
-                        } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
+                        className={`w-full px-4 py-3 rounded-lg border-2 ${errors.name && touched.name
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-400 dark:border-gray-600 focus:ring-blue-500"
+                          } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
                         placeholder="Dipanita"
                       />
                       {errors.name && touched.name && (
@@ -550,19 +557,22 @@ export default function Contact() {
                       <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                         Email Address <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        className={`w-full px-4 py-3 rounded-lg border-2 ${
-                          errors.email && touched.email
+                      <div className="relative">
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          disabled={isSubmitting}
+                          className={`w-full px-4 py-3 rounded-lg border-2 ${errors.email && touched.email
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-400 dark:border-gray-600 focus:ring-blue-500"
-                        } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
-                        placeholder="dipanita@example.com"
-                      />
+                            } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
+                          placeholder="dipanita@example.com"
+                        />
+                      </div>
+
                       {errors.email && touched.email && (
                         <p className="mt-1 text-sm text-red-500">
                           {errors.email}
@@ -582,11 +592,10 @@ export default function Contact() {
                       value={formData.subject}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      className={`w-full px-4 py-3 rounded-lg border-2 ${
-                        errors.subject && touched.subject
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-gray-400 dark:border-gray-600 focus:ring-blue-500"
-                      } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
+                      className={`w-full px-4 py-3 rounded-lg border-2 ${errors.subject && touched.subject
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-400 dark:border-gray-600 focus:ring-blue-500"
+                        } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
                       placeholder="How can we help you?"
                     />
                     {errors.subject && touched.subject && (
@@ -624,11 +633,10 @@ export default function Contact() {
                               priority: priority.value,
                             }))
                           }
-                          className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
-                            formData.priority === priority.value
-                              ? getPriorityColor(priority.value)
-                              : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
-                          }`}
+                          className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${formData.priority === priority.value
+                            ? getPriorityColor(priority.value)
+                            : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
+                            }`}
                         >
                           {priority.label}
                         </button>
@@ -647,11 +655,10 @@ export default function Contact() {
                       onChange={handleChange}
                       onBlur={handleBlur}
                       rows={6}
-                      className={`w-full px-4 py-3 rounded-lg border-2 resize-none ${
-                        errors.message && touched.message
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-gray-400 dark:border-gray-600 focus:ring-blue-500"
-                      } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
+                      className={`w-full px-4 py-3 rounded-lg border-2 resize-none ${errors.message && touched.message
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-gray-400 dark:border-gray-600 focus:ring-blue-500"
+                        } bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/30 transition-all duration-200`}
                       placeholder="Please describe your issue or question in detail..."
                     />
                     {errors.message && touched.message && (
@@ -663,6 +670,14 @@ export default function Contact() {
                       {formData.message.length}/500 characters
                     </p>
                   </div>
+
+                  {/* Status Messages for OTP/Form errors */}
+                  {submitStatus.message && !showSuccessModal && (
+                    <div className={`p-4 rounded-lg mb-4 text-sm font-medium ${submitStatus.type === 'error' ? 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-200' : 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/40 dark:text-green-200'}`}>
+                      {submitStatus.type === 'error' ? <FaExclamationTriangle className="inline mr-2" /> : <FaCheckCircle className="inline mr-2" />}
+                      {submitStatus.message}
+                    </div>
+                  )}
 
                   {/* Submit Button */}
                   <button
@@ -783,9 +798,8 @@ export default function Contact() {
                           {faq.question}
                         </span>
                         <FaArrowRight
-                          className={`text-gray-400 transition-transform duration-200 ${
-                            selectedFAQ === faq.id ? "rotate-90" : ""
-                          }`}
+                          className={`text-gray-400 transition-transform duration-200 ${selectedFAQ === faq.id ? "rotate-90" : ""
+                            }`}
                         />
                       </button>
 
